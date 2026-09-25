@@ -5,15 +5,22 @@ export const catalogRouter = new Hono();
 
 // GET /v1/catalog/products
 catalogRouter.get('/products', async (c) => {
+  const isB2bRequest = c.req.query('b2b') === 'true' || c.req.query('visibility') === 'B2B_Only';
   const products = await getCollection('products', c.env);
-  // Exclude cost/internal fields for public view
+  // Exclude cost/internal fields for public view and enforce visibility settings
   const publicProducts = products
-    .filter((p: any) =>
-      p.status === 'Active' ||
-      p.status === 'active' ||
-      p.publicationStatus === 'published' ||
-      (!p.status && p.publicationStatus !== 'draft' && p.publicationStatus !== 'archived')
-    )
+    .filter((p: any) => {
+      const isStatusActive =
+        p.status === 'Active' ||
+        p.status === 'active' ||
+        p.publicationStatus === 'published' ||
+        (!p.status && p.publicationStatus !== 'draft' && p.publicationStatus !== 'archived');
+
+      if (!isStatusActive) return false;
+      if (p.visibility === 'Hidden') return false;
+      if (p.visibility === 'B2B_Only' && !isB2bRequest) return false;
+      return true;
+    })
     .map((p: any) => {
       const rest = { ...p };
       delete rest.internalNotes;

@@ -1,4 +1,4 @@
-import { api } from './base.api';
+import { adminFetch } from './adminClient';
 
 export interface AdminSettingsState {
   id?: string;
@@ -27,47 +27,34 @@ let localSettings: AdminSettingsState = { ...DEFAULT_ADMIN_SETTINGS };
 export const settingsApi = {
   getSettings: async (): Promise<AdminSettingsState> => {
     try {
-      const records = await api.request<AdminSettingsState[]>({
-        module: 'settings',
-        action: 'getAll',
-      });
-      if (!records || records.length === 0) {
-        return { ...localSettings };
+      const json = await adminFetch<{ success: boolean; data: any }>('/v1/admin/settings');
+      if (json && json.success && json.data && Object.keys(json.data).length > 0) {
+        localSettings = { ...DEFAULT_ADMIN_SETTINGS, ...json.data };
+        return localSettings;
       }
-      return records[0];
     } catch (err) {
-      console.warn('Failed to fetch settings from API, falling back to operational settings', err);
-      return { ...localSettings };
+      console.warn('Failed to fetch settings from API, falling back to local settings', err);
     }
+    return { ...localSettings };
   },
 
   updateSettings: async (updates: Partial<AdminSettingsState>): Promise<AdminSettingsState> => {
-    try {
-      const records = await api.request<AdminSettingsState[]>({ module: 'settings', action: 'getAll' });
-      const id = records && records.length > 0 ? records[0].id : null;
+    const updatedState = { ...localSettings, ...updates };
+    localSettings = updatedState;
 
-      if (id) {
-        const updated = await api.request<AdminSettingsState>({
-          module: 'settings',
-          action: 'update',
-          id,
-          data: updates,
-        });
-        localSettings = { ...localSettings, ...updated };
-        return updated;
-      } else {
-        const created = await api.request<AdminSettingsState>({
-          module: 'settings',
-          action: 'create',
-          data: updates,
-        });
-        localSettings = { ...localSettings, ...created };
-        return created;
+    try {
+      const json = await adminFetch<{ success: boolean; data: any }>('/v1/admin/settings', {
+        method: 'POST',
+        body: JSON.stringify(updatedState),
+      });
+      if (json && json.success && json.data) {
+        localSettings = { ...DEFAULT_ADMIN_SETTINGS, ...json.data };
+        return localSettings;
       }
     } catch (err) {
-      console.warn('Failed to persist settings to API, saving locally', err);
-      localSettings = { ...localSettings, ...updates };
-      return { ...localSettings };
+      console.warn('Failed to persist settings to backend API', err);
     }
+
+    return { ...localSettings };
   },
 };

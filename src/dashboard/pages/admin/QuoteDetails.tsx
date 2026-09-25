@@ -71,6 +71,27 @@ export const QuoteDetails: React.FC = () => {
     );
   }
 
+  const handleSendQuote = async () => {
+    if (!quote) return;
+    setIsProcessing(true);
+    try {
+      const res = await QuoteService.sendQuote(quote.id);
+      setQuote(res.quote);
+      setEvents(TimelineService.getEventsForEntity(quote.id));
+      if (res.emailSent) {
+        toast.success(`Quote sent successfully to ${quote.email}`);
+      } else if (res.warning) {
+        toast.warning(res.warning);
+      } else {
+        toast.success(`Quote status updated to Sent to Customer`);
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to send quote');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const handleStatusChange = async (newStatus: QuoteStatus) => {
     setIsProcessing(true);
     try {
@@ -191,7 +212,7 @@ export const QuoteDetails: React.FC = () => {
               <CardContent>
                 <div className="space-y-2.5">
                   {quote.status === 'Draft' && (
-                    <Button onClick={() => handleStatusChange('Sent to Customer')} disabled={isProcessing} className="w-full">
+                    <Button onClick={handleSendQuote} disabled={isProcessing} className="w-full">
                       <Send className="w-4 h-4 mr-2" /> Send to Customer
                     </Button>
                   )}

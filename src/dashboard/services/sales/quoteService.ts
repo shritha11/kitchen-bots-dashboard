@@ -336,6 +336,27 @@ export class QuoteService {
     return updatedQuote;
   }
 
+  static async sendQuote(id: string): Promise<{ quote: Quote; emailSent: boolean; warning?: string }> {
+    const quote = this.quotes.get(id);
+    if (!quote) throw new Error(`Quote ${id} not found`);
+
+    const json = await adminFetch<{ success: boolean; data: any; emailSent: boolean; warning?: string }>(
+      `/v1/admin/quotes/${encodeURIComponent(id)}/send`,
+      { method: 'POST' }
+    );
+
+    if (json && json.success) {
+      const updatedQuote: Quote = {
+        ...quote,
+        status: 'Sent to Customer',
+        updatedAt: new Date().toISOString(),
+      };
+      this.quotes.set(id, updatedQuote);
+      return { quote: updatedQuote, emailSent: json.emailSent, warning: json.warning };
+    }
+    throw new Error('Failed to send quote');
+  }
+
   static async deleteQuote(id: string): Promise<boolean> {
     this.quotes.delete(id);
     this.revisions.delete(id);

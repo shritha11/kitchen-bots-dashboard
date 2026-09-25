@@ -52,15 +52,28 @@ ordersPublicRouter.post('/', async (c) => {
   }
 
   const id = `ord-${Date.now()}`;
+  const orderNumber = body.orderNumber || `ORD-${Math.floor(10000 + Math.random() * 90000)}`;
+  const companyName = body.companyName || body.customerName || body.shippingAddress?.name || user?.name || 'Customer Order';
+  const email = body.email || user?.email || body.shippingAddress?.email || 'customer@kitchenbots.com';
+  const phone = body.phone || body.shippingAddress?.phone || '+91 9490701421';
+
   try {
     const newOrder = await setDocument('orders', id, {
       id,
+      orderNumber,
       customerId: user?.uid || body.customerId || 'guest',
+      companyName,
+      contactPerson: companyName,
+      email,
+      phone,
       items: verifiedItems,
       totalPrice: authoritativeSubtotal,
-      status: 'Pending',
+      grandTotal: authoritativeSubtotal,
+      status: body.status || 'Pending',
       paymentMethod: body.paymentMethod || 'Online',
+      orderSource: 'Ecommerce',
       shippingAddress: body.shippingAddress || body.delivery || {},
+      billingAddress: body.billingAddress || body.shippingAddress || body.delivery || {},
       createdAt: new Date().toISOString()
     }, c.env);
 

@@ -104,3 +104,54 @@ export async function listFirebaseAuthUsers(env?: any): Promise<FirebaseAuthUser
     return [];
   }
 }
+
+export async function createFirebaseAuthUser(
+  email: string,
+  password?: string,
+  displayName?: string,
+  env?: any
+): Promise<FirebaseAuthUserRecord | null> {
+  const clientEmail = env?.FIREBASE_CLIENT_EMAIL || (typeof process !== 'undefined' ? process.env?.FIREBASE_CLIENT_EMAIL : undefined);
+  const privateKey = env?.FIREBASE_PRIVATE_KEY || (typeof process !== 'undefined' ? process.env?.FIREBASE_PRIVATE_KEY : undefined);
+  const projectId = env?.FIREBASE_PROJECT_ID || (typeof process !== 'undefined' ? process.env?.FIREBASE_PROJECT_ID : undefined) || 'kitchen-bots';
+
+  if (!clientEmail || !privateKey) {
+    console.warn('[firebaseAuthAdmin] Missing FIREBASE_CLIENT_EMAIL or FIREBASE_PRIVATE_KEY; skipping Auth user creation.');
+    return null;
+  }
+
+  try {
+    const token = await getServiceAccountToken(clientEmail, privateKey);
+    const url = `https://identitytoolkit.googleapis.com/v1/projects/${projectId}/accounts`;
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email,
+        password: password || 'Customer123!',
+        displayName: displayName || email.split('@')[0],
+        emailVerified: true,
+      }),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.warn(`[firebaseAuthAdmin] Failed to create Auth user (${res.status}): ${errText}`);
+      return null;
+    }
+
+    const data = (await res.json()) as any;
+    return {
+      localId: data.localId || data.uid,
+      email: data.email || email,
+      displayName: data.displayName || displayName,
+    };
+  } catch (err: any) {
+    console.error('[firebaseAuthAdmin] Error creating Auth user:', err?.message || err);
+    return null;
+  }
+}

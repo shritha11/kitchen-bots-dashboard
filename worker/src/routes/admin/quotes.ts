@@ -146,6 +146,71 @@ quotesAdminRouter.patch('/:id/status', async (c) => {
   return c.json({ success: true, data: updatedQuote });
 });
 
+// POST /v1/admin/quotes/:id/send
+quotesAdminRouter.post('/:id/send', async (c) => {
+  const id = c.req.param('id');
+  const existing = await getDocument('quotes', id, c.env);
+  if (!existing) {
+    return c.json({ success: false, message: 'Quote not found' }, 404);
+  }
+
+  const recipientEmail = existing.email;
+  if (!recipientEmail) {
+    return c.json({ success: false, message: 'Quote does not have a valid recipient email address' }, 400);
+  }
+
+  const resendApiKey = c.env?.RESEND_API_KEY || (typeof process !== 'undefined' ? process.env?.RESEND_API_KEY : undefined);
+  const sesRegion = c.env?.AWS_SES_REGION || (typeof process !== 'undefined' ? process.env?.AWS_SES_REGION : undefined);
+
+  let emailSent = false;
+  let emailError: string | null = null;
+
+  if (resendApiKey) {
+    try {
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${resendApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: 'KitchenBots Quotes <quotes@kitchenbots.com>',
+          to: [recipientEmail],
+          subject: `Commercial Equipment Quote #${existing.quoteNumber || id}`,
+          html: `<p>Dear ${existing.contactPerson || existing.companyName},</p><p>Your commercial quotation #${existing.quoteNumber || id} for ₹${Number(existing.grandTotal || 0).toLocaleString('en-IN')} has been generated.</p>`,
+        }),
+      });
+      emailSent = res.ok;
+      if (!res.ok) {
+        emailError = await res.text();
+      }
+    } catch (err: any) {
+      emailError = err?.message || 'Failed to send email via Resend API';
+    }
+  }
+
+  const updatedQuote = await setDocument('quotes', id, {
+    ...existing,
+    status: 'Sent to Customer',
+    sentAt: new Date().toISOString(),
+    lastEmailRecipient: recipientEmail,
+    emailSentStatus: emailSent ? 'Sent' : (emailError ? 'Failed' : 'No Email Provider Configured'),
+    updatedAt: new Date().toISOString(),
+  }, c.env);
+
+  const warning = !emailSent
+    ? (emailError || 'Email infrastructure missing: set RESEND_API_KEY or AWS_SES_REGION in Cloudflare Worker secrets to enable live email delivery.')
+    : undefined;
+
+  return c.json({
+    success: true,
+    data: updatedQuote,
+    emailSent,
+    recipientEmail,
+    warning,
+  });
+});
+
 // DELETE /v1/admin/quotes/:id
 quotesAdminRouter.delete('/:id', async (c) => {
   const id = c.req.param('id');

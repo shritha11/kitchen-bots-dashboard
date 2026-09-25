@@ -14,15 +14,52 @@ enquiriesPublicRouter.post('/', async (c) => {
   }
 
   const body = await c.req.json();
-  if (!body.name && (!body.firstName || !body.email)) {
-    return c.json({ success: false, message: 'Contact details (name and email) are required' }, 400);
+  const contactName = body.name || body.firstName;
+  if (!contactName || !body.email) {
+    return c.json({ success: false, message: 'Contact details (name/firstName and email) are required' }, 400);
+  }
+
+  // Turnstile Verification
+  const turnstileSecret = c.env?.TURNSTILE_SECRET_KEY || (typeof process !== 'undefined' ? process.env?.TURNSTILE_SECRET_KEY : undefined);
+  const turnstileToken = body.turnstileToken || body['cf-turnstile-response'] || c.req.header('cf-turnstile-response');
+
+  if (turnstileSecret && turnstileSecret !== '1x0000000000000000000000000000000AA') {
+    if (!turnstileToken) {
+      return c.json({ success: false, message: 'Security verification (Turnstile token) is required' }, 400);
+    }
+    try {
+      const verifyRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          secret: turnstileSecret,
+          response: turnstileToken,
+        }),
+      });
+      const verifyOutcome = await verifyRes.json() as any;
+      if (!verifyOutcome.success) {
+        console.warn('[Enquiries] Turnstile verification failed:', verifyOutcome['error-codes']);
+        return c.json({
+          success: false,
+          message: 'Security verification failed. Please refresh the page and try again.',
+          errorCodes: verifyOutcome['error-codes'],
+        }, 400);
+      }
+    } catch (err: any) {
+      console.error('[Enquiries] Turnstile siteverify error:', err);
+    }
   }
 
   const id = `enq-${Date.now()}`;
   const newEnquiry = await setDocument('enquiries', id, {
     ...body,
     id,
-    firstName: body.firstName || body.name || 'Anonymous',
+    firstName: contactName,
+    lastName: body.lastName || '',
+    companyName: body.companyName || body.company || 'Direct Enquiry',
+    email: body.email,
+    phone: body.phone || '',
+    equipmentNeeded: body.equipmentNeeded || body.productName || 'Equipment',
     status: 'New',
     createdAt: new Date().toISOString()
   }, c.env);

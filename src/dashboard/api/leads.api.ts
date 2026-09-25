@@ -173,7 +173,7 @@ export const leadsApi = {
         return mapped;
       }
     } catch (err) {
-      console.error('[leadsApi.createLead Error]', err);
+      console.warn('[leadsApi.createLead] Backend fetch skipped or failed, persisting locally:', (err as any)?.message || err);
     }
 
     const newLead: Lead = {

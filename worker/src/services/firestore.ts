@@ -300,16 +300,33 @@ export async function getCollection<T = any>(collectionName: string, env?: any):
       throw new Error(`Firestore getCollection failed on ${collectionName}: ${errorDetail}`);
     }
     const data = (await res.json()) as any;
-    if (!data.documents || !Array.isArray(data.documents)) {
-      if (collectionName === 'products') {
-        return Object.values(CANONICAL_PRODUCTS).filter((p) => p.id.startsWith('prod-')) as T[];
-      }
-      return [];
+    const firestoreDocs: any[] = (!data.documents || !Array.isArray(data.documents))
+      ? []
+      : data.documents.map((doc: any) => {
+          const docId = doc.name.split('/').pop() || '';
+          return { id: docId, ...fromFirestoreFields(doc.fields) };
+        });
+
+    if (collectionName === 'products') {
+      const mergedMap = new Map<string, any>();
+      Object.values(CANONICAL_PRODUCTS).forEach((p) => {
+        if (p.id && p.id.startsWith('prod-')) {
+          mergedMap.set(p.id.toLowerCase(), p);
+        }
+      });
+      firestoreDocs.forEach((p: any) => {
+        if (p.id) {
+          const key = p.id.toLowerCase();
+          mergedMap.set(key, {
+            ...mergedMap.get(key),
+            ...p,
+          });
+        }
+      });
+      return Array.from(mergedMap.values()) as T[];
     }
-    return data.documents.map((doc: any) => {
-      const docId = doc.name.split('/').pop() || '';
-      return { id: docId, ...fromFirestoreFields(doc.fields) };
-    }) as T[];
+
+    return firestoreDocs as T[];
   } catch (err: any) {
     if (collectionName === 'products') {
       return Object.values(CANONICAL_PRODUCTS).filter((p) => p.id.startsWith('prod-')) as T[];

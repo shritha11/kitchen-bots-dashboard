@@ -22,13 +22,15 @@ enquiriesAdminRouter.get('/:id', async (c) => {
 // POST /v1/admin/enquiries
 enquiriesAdminRouter.post('/', async (c) => {
   const body = await c.req.json();
-  if (!body.firstName || !body.email) {
-    return c.json({ success: false, message: 'First name and email are required' }, 400);
+  const firstName = body.firstName || (body.name ? body.name.split(' ')[0] : undefined);
+  if (!firstName || !body.email) {
+    return c.json({ success: false, message: 'First name (or name) and email are required' }, 400);
   }
   const id = body.id || `enq-${Date.now()}`;
   const newEnquiry = await setDocument('enquiries', id, {
     ...body,
     id,
+    firstName,
     status: body.status || 'New',
     source: body.source || 'Direct'
   }, c.env);

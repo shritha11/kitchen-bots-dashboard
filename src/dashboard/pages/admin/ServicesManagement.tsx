@@ -509,50 +509,36 @@ export const ServicesManagement = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <img
-                        alt="Engineer Avatar"
-                        className="w-9 h-9 rounded-full object-cover shrink-0"
-                        src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=100"
-                      />
-                      <div className="min-w-0">
-                        <Text className="font-bold text-foreground text-sm truncate">Vikram R.</Text>
-                        <Text variant="muted" className="text-[10px] uppercase tracking-wider truncate">At Royal Tandoor</Text>
-                      </div>
-                    </div>
-                    <span className="w-2 h-2 rounded-full bg-green-500 shrink-0"></span>
-                  </div>
+                  {['Vikram R.', 'Priya D.', 'Amit K.'].map((engName, idx) => {
+                    const activeTicket = tickets.find(
+                      (t) => t.engineerName === engName && t.status !== 'Completed' && t.status !== 'Resolved'
+                    );
+                    const locationStatus = activeTicket ? `At ${activeTicket.customerName}` : (idx === 2 ? 'Offline' : 'On Route');
+                    const statusBg = activeTicket ? 'bg-green-500' : (idx === 2 ? 'bg-slate-400' : 'bg-yellow-500');
+                    const opacityClass = !activeTicket && idx === 2 ? 'opacity-50' : '';
+                    const avatarUrl = idx === 0
+                      ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=100'
+                      : idx === 1
+                      ? 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=100'
+                      : 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=100';
 
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <img
-                        alt="Engineer Avatar"
-                        className="w-9 h-9 rounded-full object-cover shrink-0"
-                        src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=100"
-                      />
-                      <div className="min-w-0">
-                        <Text className="font-bold text-foreground text-sm truncate">Priya D.</Text>
-                        <Text variant="muted" className="text-[10px] uppercase tracking-wider truncate">On Route (12m)</Text>
+                    return (
+                      <div key={engName} className={`flex items-center justify-between ${opacityClass}`}>
+                        <div className="flex items-center gap-3 min-w-0">
+                          <img
+                            alt="Engineer Avatar"
+                            className="w-9 h-9 rounded-full object-cover shrink-0"
+                            src={avatarUrl}
+                          />
+                          <div className="min-w-0">
+                            <Text className="font-bold text-foreground text-sm truncate">{engName}</Text>
+                            <Text variant="muted" className="text-[10px] uppercase tracking-wider truncate">{locationStatus}</Text>
+                          </div>
+                        </div>
+                        <span className={`w-2 h-2 rounded-full ${statusBg} shrink-0`}></span>
                       </div>
-                    </div>
-                    <span className="w-2 h-2 rounded-full bg-yellow-500 shrink-0"></span>
-                  </div>
-
-                  <div className="flex items-center justify-between opacity-50">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <img
-                        alt="Engineer Avatar"
-                        className="w-9 h-9 rounded-full object-cover shrink-0"
-                        src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=100"
-                      />
-                      <div className="min-w-0">
-                        <Text className="font-bold text-foreground text-sm truncate">Amit K.</Text>
-                        <Text variant="muted" className="text-[10px] uppercase tracking-wider truncate">Offline</Text>
-                      </div>
-                    </div>
-                    <span className="w-2 h-2 rounded-full bg-slate-400 shrink-0"></span>
-                  </div>
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
@@ -564,29 +550,20 @@ export const ServicesManagement = () => {
               </CardHeader>
               <CardContent>
                 <div className="relative space-y-5 before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-border">
-                  <div className="relative pl-7">
-                    <div className="absolute left-0 top-1 w-6 h-6 rounded-full bg-primary flex items-center justify-center border-4 border-background shadow-xs">
-                      <div className="w-2 h-2 bg-primary-foreground rounded-full"></div>
+                  {tickets.slice(0, 3).map((ticket, i) => (
+                    <div key={ticket.id || i} className="relative pl-7">
+                      <div className={`absolute left-0 top-1 w-6 h-6 rounded-full ${i === 0 ? 'bg-primary' : i === 1 ? 'bg-emerald-500' : 'bg-amber-500'} flex items-center justify-center border-4 border-background shadow-xs`}>
+                        <div className="w-2 h-2 bg-white rounded-full"></div>
+                      </div>
+                      <Text className="text-sm text-foreground">
+                        <span className="font-bold">#{ticket.id}</span> ({ticket.customerName}) - {ticket.status}
+                      </Text>
+                      <Text variant="muted" className="text-[10px] mt-0.5">{ticket.date || 'Recently updated'}</Text>
                     </div>
-                    <Text className="text-sm text-foreground"><span className="font-bold">#SR-9821</span> was assigned to Vikram R.</Text>
-                    <Text variant="muted" className="text-[10px] mt-0.5">2 mins ago</Text>
-                  </div>
-
-                  <div className="relative pl-7">
-                    <div className="absolute left-0 top-1 w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center border-4 border-background shadow-xs">
-                      <div className="w-2 h-2 bg-white rounded-full"></div>
-                    </div>
-                    <Text className="text-sm text-foreground"><span className="font-bold">#SR-9824</span> marked as completed</Text>
-                    <Text variant="muted" className="text-[10px] mt-0.5">15 mins ago</Text>
-                  </div>
-
-                  <div className="relative pl-7">
-                    <div className="absolute left-0 top-1 w-6 h-6 rounded-full bg-amber-500 flex items-center justify-center border-4 border-background shadow-xs">
-                      <div className="w-2 h-2 bg-white rounded-full"></div>
-                    </div>
-                    <Text className="text-sm text-foreground"><span className="font-bold">New Ticket</span> created by Cafe Bliss</Text>
-                    <Text variant="muted" className="text-[10px] mt-0.5">1 hour ago</Text>
-                  </div>
+                  ))}
+                  {tickets.length === 0 && (
+                    <div className="text-xs text-muted-foreground py-2">No recent support activity.</div>
+                  )}
                 </div>
               </CardContent>
             </Card>

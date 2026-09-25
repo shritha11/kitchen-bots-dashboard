@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { getCollection, getDocument, setDocument, deleteDocument } from '../../services/firestore';
-import { listFirebaseAuthUsers } from '../../services/firebaseAuthAdmin';
+import { listFirebaseAuthUsers, createFirebaseAuthUser } from '../../services/firebaseAuthAdmin';
 
 export const usersAdminRouter = new Hono();
 
@@ -98,15 +98,29 @@ usersAdminRouter.post('/', async (c) => {
   if (!body.email || !body.name) {
     return c.json({ success: false, message: 'Name and email are required' }, 400);
   }
-  const id = body.id || `user-${Date.now()}`;
+
+  // Provision user in Firebase Auth if not explicitly provided
+  let authUid = body.uid;
+  let initialPassword = body.password;
+
+  if (!authUid) {
+    const authUser = await createFirebaseAuthUser(body.email, initialPassword, body.name, c.env);
+    if (authUser?.localId) {
+      authUid = authUser.localId;
+    }
+  }
+
+  const id = authUid || body.id || `user-${Date.now()}`;
   const newUser = await setDocument('users', id, {
     ...body,
     id,
-    uid: body.uid || id,
+    uid: id,
     role: body.role || 'customer',
-    status: body.status || 'active'
+    status: body.status || 'active',
+    isVerifiedCustomer: true,
   }, c.env);
-  return c.json({ success: true, data: newUser }, 201);
+
+  return c.json({ success: true, data: newUser, initialPassword: initialPassword || 'Customer123!' }, 201);
 });
 
 // PATCH /v1/admin/users/:id

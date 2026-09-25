@@ -360,6 +360,11 @@ export class OrderService {
 
     this.orders.set(id, order);
 
+    adminFetch('/v1/admin/orders', {
+      method: 'POST',
+      body: JSON.stringify(order),
+    }).catch((err) => console.warn('[OrderService] Failed to persist direct order to API:', err));
+
     TimelineService.addTimelineEntry({
       id: crypto.randomUUID(),
       entityId: id,
