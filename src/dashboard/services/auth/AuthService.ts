@@ -131,13 +131,16 @@ export class FirebaseAuthService implements IAuthService {
     this.updateState({ status: 'AUTHENTICATING', error: null });
     
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, usernameOrEmail, password);
+      const email = usernameOrEmail.includes('@')
+        ? usernameOrEmail
+        : `${usernameOrEmail.toLowerCase()}@kitchenbots.com`;
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const token = await userCredential.user.getIdToken();
       
       const adminUser: User = {
         id: userCredential.user.uid,
         name: userCredential.user.displayName || userCredential.user.email?.split('@')[0] || 'Admin User',
-        email: userCredential.user.email || usernameOrEmail,
+        email: userCredential.user.email || email,
         role: 'admin',
         addresses: [],
         wishlist: [],
@@ -153,7 +156,12 @@ export class FirebaseAuthService implements IAuthService {
       return adminUser;
     } catch (error: any) {
       let message = error.message || 'Failed to sign in with Firebase Auth';
-      if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+      if (
+        error.code === 'auth/invalid-credential' ||
+        error.code === 'auth/user-not-found' ||
+        error.code === 'auth/wrong-password' ||
+        error.code === 'auth/invalid-email'
+      ) {
         message = 'Invalid email or password';
       }
       this.updateState({ status: 'ERROR', error: message });

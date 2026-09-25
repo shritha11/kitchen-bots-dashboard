@@ -67,6 +67,35 @@ export function ProductModal({ isOpen, onClose, onSubmit, initialData }: Product
 
   useEffect(() => {
     if (initialData) {
+      const normalizedImages = (initialData.images || []).map((img: any, idx: number) => {
+        if (typeof img === 'string') {
+          return { id: `img-${initialData.id || 'default'}-${idx + 1}`, url: img, type: 'image' as const, isPrimary: idx === 0, order: idx };
+        }
+        if (img && typeof img === 'object') {
+          return {
+            id: img.id || `img-${initialData.id || 'default'}-${idx + 1}`,
+            url: img.url || '',
+            type: img.type || 'image',
+            isPrimary: img.isPrimary !== undefined ? Boolean(img.isPrimary) : idx === 0,
+            order: img.order !== undefined ? Number(img.order) : idx
+          };
+        }
+        return { id: `img-${initialData.id || 'default'}-${idx + 1}`, url: String(img || ''), type: 'image' as const, isPrimary: idx === 0, order: idx };
+      });
+
+      const normalizedSpecs = (initialData.specifications || []).map((s: any, idx: number) => {
+        if (typeof s === 'string') {
+          const [name, val] = s.split(': ');
+          return { id: `spec-${initialData.id || 'default'}-${idx + 1}`, group: 'General', name: name || 'Spec', value: val || s };
+        }
+        return {
+          id: s.id || `spec-${initialData.id || 'default'}-${idx + 1}`,
+          group: s.group || 'General',
+          name: s.name || '',
+          value: s.value || ''
+        };
+      });
+
       form.reset({
         name: initialData.name,
         sku: initialData.sku,
@@ -74,9 +103,9 @@ export function ProductModal({ isOpen, onClose, onSubmit, initialData }: Product
         brand: initialData.brand || '',
         shortDescription: initialData.shortDescription || '',
         description: initialData.description || '',
-        images: initialData.images || [],
+        images: normalizedImages,
         tags: initialData.tags || [],
-        specifications: initialData.specifications || [],
+        specifications: normalizedSpecs,
         variants: initialData.variants || [],
         isFeatured: initialData.isFeatured,
         status: initialData.status,

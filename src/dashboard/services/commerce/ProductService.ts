@@ -17,15 +17,40 @@ function normalizeProduct(doc: any): CommerceProduct {
     : (existingCatalogProduct?.sku || doc.sku || `KB-${id.toUpperCase()}`);
 
   const images = Array.isArray(doc.images) && doc.images.length > 0
-    ? doc.images
+    ? doc.images.map((img: any, idx: number) => {
+        if (typeof img === 'string') {
+          return { id: `img-${id}-${idx + 1}`, url: img, type: 'image' as const, isPrimary: idx === 0, order: idx };
+        }
+        if (img && typeof img === 'object') {
+          return {
+            id: img.id || `img-${id}-${idx + 1}`,
+            url: img.url || '',
+            type: img.type || 'image',
+            isPrimary: img.isPrimary !== undefined ? Boolean(img.isPrimary) : idx === 0,
+            order: img.order !== undefined ? Number(img.order) : idx
+          };
+        }
+        return { id: `img-${id}-${idx + 1}`, url: String(img || ''), type: 'image' as const, isPrimary: idx === 0, order: idx };
+      })
     : (doc.image ? [{ id: `img-${id}`, url: doc.image, type: 'image' as const, isPrimary: true, order: 0 }] : []);
 
-  const specifications = Array.isArray(doc.specifications)
-    ? doc.specifications
+  const specifications = Array.isArray(doc.specifications) && doc.specifications.length > 0
+    ? doc.specifications.map((s: any, idx: number) => {
+        if (typeof s === 'string') {
+          const [name, val] = s.split(': ');
+          return { id: `spec-${id}-${idx + 1}`, group: 'General', name: name || 'Spec', value: val || s };
+        }
+        return {
+          id: s.id || `spec-${id}-${idx + 1}`,
+          group: s.group || 'General',
+          name: s.name || '',
+          value: s.value || ''
+        };
+      })
     : (Array.isArray(doc.specs)
         ? doc.specs.map((s: string, idx: number) => {
             const [name, val] = s.split(': ');
-            return { id: `spec-${idx}`, group: 'General', name: name || 'Spec', value: val || s };
+            return { id: `spec-${id}-${idx + 1}`, group: 'General', name: name || 'Spec', value: val || s };
           })
         : []);
 

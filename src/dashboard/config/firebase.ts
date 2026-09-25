@@ -16,12 +16,12 @@ function getEnvVar(key: string): string | undefined {
 }
 
 const firebaseConfig = {
-  apiKey: getEnvVar('VITE_FIREBASE_API_KEY') || 'mock-api-key',
-  authDomain: getEnvVar('VITE_FIREBASE_AUTH_DOMAIN') || 'kitchen-bots-dev.firebaseapp.com',
-  projectId: getEnvVar('VITE_FIREBASE_PROJECT_ID') || 'kitchen-bots-dev',
-  storageBucket: getEnvVar('VITE_FIREBASE_STORAGE_BUCKET') || 'kitchen-bots-dev.appspot.com',
-  messagingSenderId: getEnvVar('VITE_FIREBASE_MESSAGING_SENDER_ID') || '1234567890',
-  appId: getEnvVar('VITE_FIREBASE_APP_ID') || '1:1234567890:web:mockappid'
+  apiKey: getEnvVar('VITE_FIREBASE_API_KEY') || 'AIzaSyCJ1DhmehgqKh_FMRUaCqwm1x-esjcEvbU',
+  authDomain: getEnvVar('VITE_FIREBASE_AUTH_DOMAIN') || 'kitchen-bots.firebaseapp.com',
+  projectId: getEnvVar('VITE_FIREBASE_PROJECT_ID') || 'kitchen-bots',
+  storageBucket: getEnvVar('VITE_FIREBASE_STORAGE_BUCKET') || 'kitchen-bots.firebasestorage.app',
+  messagingSenderId: getEnvVar('VITE_FIREBASE_MESSAGING_SENDER_ID') || '830613552692',
+  appId: getEnvVar('VITE_FIREBASE_APP_ID') || '1:830613552692:web:f8d96a2af80a45f4a61461'
 };
 
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
