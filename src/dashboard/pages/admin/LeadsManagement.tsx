@@ -382,7 +382,7 @@ export function LeadsManagement() {
           </Button>
           <Button variant="default" onClick={() => setIsAddLeadModalOpen(true)} className="gap-2 cursor-pointer">
             <UserPlus size={16} />
-            Add Lead
+            New Lead
           </Button>
         </>
       }

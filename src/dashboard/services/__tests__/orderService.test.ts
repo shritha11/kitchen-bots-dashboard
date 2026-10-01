@@ -91,7 +91,7 @@ describe('orderService', () => {
 });
 
 describe('SalesOrderService (Commercial Admin ERP)', () => {
-  it('should support registering and state transitions cleanly', () => {
+  it('should support registering and state transitions cleanly', async () => {
     const order = SalesOrderService.registerDirectOrder({
       id: 'ord-test-comm-1',
       orderNumber: 'ORD-9801',
@@ -125,7 +125,7 @@ describe('SalesOrderService (Commercial Admin ERP)', () => {
     expect(orders).toBeInstanceOf(Array);
     expect(orders.length).toBeGreaterThan(0);
 
-    const approved = SalesOrderService.updateStatus(
+    const approved = await SalesOrderService.updateStatus(
       'ord-test-comm-1',
       'Approved',
       'admin-1',

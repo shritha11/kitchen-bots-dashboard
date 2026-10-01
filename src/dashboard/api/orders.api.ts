@@ -163,6 +163,29 @@ export const ordersApi = {
       status: order.status || 'pending',
       fulfillments: order.fulfillments || [],
     };
+
+    try {
+      const json = await adminFetch<{ success: boolean; data: any }>('/v1/admin/orders', {
+        method: 'POST',
+        body: JSON.stringify({
+          ...newOrder,
+          items: (newOrder.items || []).map((it) => ({
+            productId: it.productId,
+            name: it.name,
+            price: it.price,
+            quantity: it.quantity,
+          })),
+        }),
+      });
+      if (json && json.success && json.data) {
+        const persisted = mapFirestoreOrderToDashboardOrder(json.data);
+        localOrders.unshift(persisted);
+        return persisted;
+      }
+    } catch (err) {
+      console.warn('[ordersApi.createOrder] Failed to persist order to backend:', err);
+    }
+
     localOrders.unshift(newOrder);
     return newOrder;
   },

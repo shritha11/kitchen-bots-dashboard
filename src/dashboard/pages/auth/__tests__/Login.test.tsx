@@ -58,7 +58,6 @@ describe('Login Page (shadcn login-02)', () => {
     expect(screen.getByLabelText(/Username or Email/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^Password$/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^Login$/i })).toBeInTheDocument();
-    expect(screen.getByText(/Test Credentials/i)).toBeInTheDocument();
 
     // Verify slideshow dots are rendered
     expect(screen.getByLabelText('Go to slide 1')).toBeInTheDocument();
@@ -69,14 +68,14 @@ describe('Login Page (shadcn login-02)', () => {
     expect(screen.queryByText(/Intelligent robotics and automated culinary systems/i)).not.toBeInTheDocument();
   });
 
-  it('allows auto-filling test admin credentials', async () => {
+  it('allows user to enter credentials', async () => {
     renderWithProviders(<Login />);
-
-    const fillButton = screen.getByRole('button', { name: /Fill Admin/i });
-    await userEvent.click(fillButton);
 
     const usernameInput = screen.getByLabelText(/Username or Email/i) as HTMLInputElement;
     const passwordInput = screen.getByLabelText(/^Password$/i) as HTMLInputElement;
+
+    await userEvent.type(usernameInput, 'Admin');
+    await userEvent.type(passwordInput, '123456');
 
     expect(usernameInput.value).toBe('Admin');
     expect(passwordInput.value).toBe('123456');
@@ -91,8 +90,11 @@ describe('Login Page (shadcn login-02)', () => {
 
     renderWithProviders(<Login />);
 
-    const fillButton = screen.getByRole('button', { name: /Fill Admin/i });
-    await userEvent.click(fillButton);
+    const usernameInput = screen.getByLabelText(/Username or Email/i);
+    const passwordInput = screen.getByLabelText(/^Password$/i);
+
+    await userEvent.type(usernameInput, 'Admin');
+    await userEvent.type(passwordInput, '123456');
 
     const submitButton = screen.getByRole('button', { name: /^Login$/i });
     await userEvent.click(submitButton);

@@ -124,32 +124,6 @@ export function LoginForm({
           {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {isLoading ? "Signing in..." : "Login"}
         </Button>
-
-        <div className="relative text-center text-xs after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
-          <span className="relative z-10 bg-background px-2 text-muted-foreground uppercase tracking-wider font-semibold text-[10px]">
-            Demo Environment
-          </span>
-        </div>
-
-        <div className="rounded-lg border border-border/80 bg-muted/40 p-3 text-xs text-muted-foreground">
-          <div className="flex items-center justify-between mb-1">
-            <span className="font-semibold text-foreground">Test Credentials</span>
-            <button
-              type="button"
-              onClick={() => {
-                setUsername("Admin")
-                setPassword("123456")
-              }}
-              className="text-[11px] font-medium text-primary hover:underline hover:text-primary/80 transition-colors"
-            >
-              Fill Admin
-            </button>
-          </div>
-          <div className="flex items-center justify-between font-mono text-[11px]">
-            <span>Username: <strong className="text-foreground">Admin</strong></span>
-            <span>Password: <strong className="text-foreground">123456</strong></span>
-          </div>
-        </div>
       </div>
     </form>
   )
