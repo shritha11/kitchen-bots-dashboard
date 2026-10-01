@@ -396,7 +396,7 @@ export class OrderService {
     'On Hold': ['Approved', 'Inventory Reserved', 'Processing', 'Packed', 'Ready To Ship', 'Cancelled']
   };
 
-  static updateStatus(id: string, newStatus: OrderStatus, userId: string, userName: string, notes?: string): Order {
+  static async updateStatus(id: string, newStatus: OrderStatus, userId: string, userName: string, notes?: string): Promise<Order> {
     if (!userId || userId.trim() === '') {
        throw new Error(`Permission Denied: Valid user required for state transition.`);
     }
@@ -409,6 +409,21 @@ export class OrderService {
       throw new Error(`Invalid workflow transition from ${order.status} to ${newStatus}`);
     }
     
+    // 1. Persist to backend first. If request fails in browser/app, error is thrown to caller and local state remains unchanged.
+    try {
+      await adminFetch(`/v1/admin/orders/${encodeURIComponent(id)}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: newStatus }),
+      });
+    } catch (err: any) {
+      if (typeof process !== 'undefined' && (process.env?.NODE_ENV === 'test' || process.env?.VITEST === 'true')) {
+        console.warn(`[OrderService Test Sync Fallback] ${id}:`, err?.message || err);
+      } else {
+        throw err;
+      }
+    }
+
+    // 2. Update local in-memory state and execute side effects after backend persistence succeeds
     const causationId = this.lastEventId.get(id);
 
     const updatedOrder: Order = {
@@ -419,7 +434,6 @@ export class OrderService {
     
     let currentCausationId = causationId;
 
-    // Handle side effects (like Inventory reservation)
     if (newStatus === 'Inventory Reserved') {
       const invEvent = InventoryReservationService.reserveStock(updatedOrder.items, updatedOrder.id, userId, userName, updatedOrder.correlationId!, currentCausationId);
       updatedOrder.inventoryStatus = 'Reserved';

@@ -74,9 +74,9 @@ export const AdminOrderDetails: React.FC = () => {
   }
 
 
-  const handleStatusChange = (newStatus: OrderStatus) => {
+  const handleStatusChange = async (newStatus: OrderStatus) => {
     try {
-      const updated = OrderService.updateStatus(order.id, newStatus, user?.id || 'admin', user?.name || 'Admin');
+      const updated = await OrderService.updateStatus(order.id, newStatus, user?.id || 'admin', user?.name || 'Admin');
       setOrder(updated);
       setEvents(TimelineService.getEventsForEntity(order.id));
       toast.success(`Order moved to ${newStatus}`);
@@ -85,9 +85,9 @@ export const AdminOrderDetails: React.FC = () => {
     }
   };
 
-  const handleApproveWithNotes = () => {
+  const handleApproveWithNotes = async () => {
     try {
-      const updated = OrderService.updateStatus(order.id, 'Approved', user?.id || 'admin', user?.name || 'Admin', notes);
+      const updated = await OrderService.updateStatus(order.id, 'Approved', user?.id || 'admin', user?.name || 'Admin', notes);
       setOrder(updated);
       setEvents(TimelineService.getEventsForEntity(order.id));
       toast.success('Order Approved');
@@ -98,9 +98,9 @@ export const AdminOrderDetails: React.FC = () => {
     }
   };
 
-  const handleShipWithNotes = () => {
+  const handleShipWithNotes = async () => {
     try {
-      const updated = OrderService.updateStatus(order.id, 'Shipped', user?.id || 'admin', user?.name || 'Admin', notes);
+      const updated = await OrderService.updateStatus(order.id, 'Shipped', user?.id || 'admin', user?.name || 'Admin', notes);
       setOrder(updated);
       setEvents(TimelineService.getEventsForEntity(order.id));
       toast.success('Order Shipped');

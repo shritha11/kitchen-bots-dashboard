@@ -22,7 +22,16 @@ export function getApiBaseUrl(): string {
  * Retrieves the active Firebase user ID token or stored session token
  */
 export async function getAuthToken(): Promise<string | null> {
-  // 1. Try currently active Firebase Auth user
+  // 1. Wait for Firebase Auth initialization if auth instance is ready
+  try {
+    if (auth && typeof auth.authStateReady === 'function') {
+      await auth.authStateReady();
+    }
+  } catch {
+    // Ignore authStateReady error
+  }
+
+  // 2. Try currently active Firebase Auth user
   try {
     if (auth && auth.currentUser) {
       const token = await auth.currentUser.getIdToken();
@@ -34,7 +43,7 @@ export async function getAuthToken(): Promise<string | null> {
     // Ignore Firebase auth error
   }
 
-  // 2. Try stored session token from localStorage
+  // 3. Fallback to stored session token from localStorage
   try {
     if (typeof localStorage !== 'undefined') {
       const storedToken = localStorage.getItem('auth_token') || localStorage.getItem('kb_auth_token');
